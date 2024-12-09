@@ -10,24 +10,29 @@ import SwiftUI
 struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @State private var path = [Person]()
-    @Query var people: [Person]
+    
+    @State private var sortOrder = [SortDescriptor(\Person.name)]
+    @State private var searchText = ""
     
     var body: some View {
         NavigationStack(path: $path) {
-            List {
-                ForEach(people) { person in
-                    NavigationLink(value: person) {
-                        Text(person.name)
-                    }
+            PeopleView(searchString: searchText, sortOrder: sortOrder)
+                .navigationTitle("Real Facts")
+                .navigationDestination(for: Person.self) { person in
+                    EditPersonView(person: person)
                 }
-            }
-            .navigationTitle("Real Facts")
-            .navigationDestination(for: Person.self) { person in
-                EditPersonView(person: person)
-            }
-            .toolbar {
-                Button("Add Person", systemImage: "plus", action: addPerson)
-            }
+                .toolbar {
+                    Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                        Picker("Sort", selection: $sortOrder) {
+                            Text("Name (A-Z)")
+                                .tag([SortDescriptor(\Person.name)])
+                            Text("Name (Z-A)")
+                                .tag([SortDescriptor(\Person.name, order: .reverse)])
+                        }
+                    }
+                    Button("Add Person", systemImage: "plus", action: addPerson)
+                }
+                .searchable(text: $searchText)
         }
     }
     
@@ -36,6 +41,7 @@ struct ContentView: View {
         modelContext.insert(person)
         path.append(person)
     }
+    
 }
 
 #Preview {
